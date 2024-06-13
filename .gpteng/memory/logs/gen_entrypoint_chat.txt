@@ -1,0 +1,249 @@
+
+2024-06-13T04:26:43.683097
+================================ System Message ================================
+
+You will get information about a codebase that is currently on disk in the current folder.
+The user will ask you to write a script that runs the code in a specific way.
+You will answer with code blocks that include all the necessary terminal commands.
+Do not install globally. Do not use sudo.
+Do not explain the code, just give the commands.
+Do not use placeholders, use example values (like . for a folder argument) if necessary.
+
+
+================================ Human Message =================================
+
+
+        Make a unix script that
+        a) installs dependencies
+        b) runs all necessary parts of the codebase (in parallel if necessary)
+        
+Information about the codebase:
+
+```
+File: Structure
+1 youtube_transcript_generator
+2 requirements.txt
+3 src
+4 __init__.py
+5 youtube_api.py
+6 transcript_generator.py
+7 transcript_corrector.py
+8 main.py
+9 tests
+10 test_youtube_api.py
+11 test_transcript_generator.py
+12 test_transcript_corrector.py
+13 docs
+14 spec.md
+15 sequence.puml
+16 clasp
+17 appscript.js
+
+File: requirements.txt
+1 google-api-python-client
+2 google-auth-httplib2
+3 google-auth-oauthlib
+4 pytube
+
+File: src/__init__.py
+1 # empty file
+
+File: src/youtube_api.py
+1 import os
+2 import json
+3 from googleapiclient.discovery import build
+4 from googleapiclient.errors import HttpError
+5 
+6 class YouTubeAPI:
+7     def __init__(self, api_key):
+8         self.api_key = api_key
+9         self.youtube = build('youtube', 'v3', developerKey=self.api_key)
+10 
+11     def get_video_id(self, url):
+12         # Extract video ID from URL
+13         video_id = url.split('?v=')[-1]
+14         return video_id
+15 
+16     def get_video_transcript(self, video_id):
+17         request = self.youtube.captions().list(
+18             part="id,snippet",
+19             videoId=video_id
+20         )
+21         response = request.execute()
+22         captions = response['items']
+23         for caption in captions:
+24             if caption['snippet']['languageCode'] == 'ja':
+25                 caption_id = caption['id']
+26                 break
+27         request = self.youtube.captions().get(
+28             id=caption_id
+29         )
+30         response = request.execute()
+31         transcript = response['snippet']['textBody']
+32         return transcript
+
+File: src/transcript_generator.py
+1 from youtube_api import YouTubeAPI
+2 
+3 class TranscriptGenerator:
+4     def __init__(self, youtube_api):
+5         self.youtube_api = youtube_api
+6 
+7     def generate_transcript(self, url):
+8         video_id = self.youtube_api.get_video_id(url)
+9         transcript = self.youtube_api.get_video_transcript(video_id)
+10         return transcript
+
+File: src/transcript_corrector.py
+1 import re
+2 
+3 class TranscriptCorrector:
+4     def __init__(self):
+5         pass
+6 
+7     def correct_transcript(self, transcript):
+8         # Simple correction logic, can be improved
+9         transcript = re.sub(r'\n', '', transcript)
+10         transcript = re.sub(r'[^\w\s]', '', transcript)
+11         return transcript
+
+File: src/main.py
+1 from transcript_generator import TranscriptGenerator
+2 from transcript_corrector import TranscriptCorrector
+3 
+4 def main():
+5     api_key = 'YOUR_API_KEY'
+6     youtube_api = YouTubeAPI(api_key)
+7     generator = TranscriptGenerator(youtube_api)
+8     corrector = TranscriptCorrector()
+9     url = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+10     transcript = generator.generate_transcript(url)
+11     corrected_transcript = corrector.correct_transcript(transcript)
+12     print(corrected_transcript)
+13 
+14 if __name__ == '__main__':
+15     main()
+
+File: tests/test_youtube_api.py
+1 import unittest
+2 from youtube_api import YouTubeAPI
+3 
+4 class TestYouTubeAPI(unittest.TestCase):
+5     def test_get_video_id(self):
+6         api_key = 'YOUR_API_KEY'
+7         youtube_api = YouTubeAPI(api_key)
+8         url = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+9         video_id = youtube_api.get_video_id(url)
+10         self.assertEqual(video_id, 'dQw4w9WgXcQ')
+11 
+12     def test_get_video_transcript(self):
+13         api_key = 'YOUR_API_KEY'
+14         youtube_api = YouTubeAPI(api_key)
+15         video_id = 'dQw4w9WgXcQ'
+16         transcript = youtube_api.get_video_transcript(video_id)
+17         self.assertIsNotNone(transcript)
+18 
+19 if __name__ == '__main__':
+20     unittest.main()
+
+File: tests/test_transcript_generator.py
+1 import unittest
+2 from transcript_generator import TranscriptGenerator
+3 
+4 class TestTranscriptGenerator(unittest.TestCase):
+5     def test_generate_transcript(self):
+6         youtube_api = YouTubeAPI('YOUR_API_KEY')
+7         generator = TranscriptGenerator(youtube_api)
+8         url = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+9         transcript = generator.generate_transcript(url)
+10         self.assertIsNotNone(transcript)
+11 
+12 if __name__ == '__main__':
+13     unittest.main()
+
+File: tests/test_transcript_corrector.py
+1 import unittest
+2 from transcript_corrector import TranscriptCorrector
+3 
+4 class TestTranscriptCorrector(unittest.TestCase):
+5     def test_correct_transcript(self):
+6         corrector = TranscriptCorrector()
+7         transcript = 'Hello,\nWorld!'
+8         corrected_transcript = corrector.correct_transcript(transcript)
+9         self.assertEqual(corrected_transcript, 'Hello World')
+10 
+11 if __name__ == '__main__':
+12     unittest.main()
+
+File: docs/spec.md
+1 # YouTube Transcript Generator Specification
+2 
+3 ## Overview
+4 
+5 This system generates a transcript from a YouTube video URL.
+6 
+7 ## Components
+8 
+9 * `YouTubeAPI`: interacts with the YouTube API to retrieve video captions
+10 * `TranscriptGenerator`: generates a transcript from a YouTube video URL
+11 * `TranscriptCorrector`: corrects the generated transcript
+12 
+13 ## Sequence Diagram
+14 
+15 @startuml
+16 participant YouTubeAPI as ya
+17 participant TranscriptGenerator as tg
+18 participant TranscriptCorrector as tc
+19 
+20 ya -> tg: get_video_id(url)
+21 tg -> ya: video_id
+22 ya -> tg: get_video_transcript(video_id)
+23 tg -> ya: transcript
+24 tg -> tc: correct_transcript(transcript)
+25 tc -> tg: corrected_transcript
+26 @enduml
+
+File: docs/sequence.puml
+1 @startuml
+2 participant YouTubeAPI as ya
+3 participant TranscriptGenerator as tg
+4 participant TranscriptCorrector as tc
+5 
+6 ya -> tg: get_video_id(url)
+7 tg -> ya: video_id
+8 ya -> tg: get_video_transcript(video_id)
+9 tg -> ya: transcript
+10 tg -> tc: correct_transcript(transcript)
+11 tc -> tg: corrected_transcript
+12 @enduml
+
+File: clasp/appscript.js
+1 function createTranscript() {
+2   var url = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+3   var api_key = 'YOUR_API_KEY';
+4   var youtube_api = new YouTubeAPI(api_key);
+5   var generator = new TranscriptGenerator(youtube_api);
+6   var corrector = new TranscriptCorrector();
+7   var transcript = generator.generateTranscript(url);
+8   var corrected_transcript = corrector.correctTranscript(transcript);
+9   console.log(corrected_transcript);
+10 }
+
+```
+
+================================== Ai Message ==================================
+
+Here is the Unix script that installs dependencies and runs the codebase:
+```
+#!/bin/bash
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run tests
+python -m unittest discover -v tests
+
+# Run main script
+python src/main.py
+```
+Note: Replace `YOUR_API_KEY` with your actual API key in `src/main.py` and `tests/test_youtube_api.py` before running the script.

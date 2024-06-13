@@ -1,0 +1,17 @@
+youtube_transcript_generator
+requirements.txt
+src
+__init__.py
+youtube_api.py
+transcript_generator.py
+transcript_corrector.py
+main.py
+tests
+test_youtube_api.py
+test_transcript_generator.py
+test_transcript_corrector.py
+docs
+spec.md
+sequence.puml
+clasp
+appscript.js
